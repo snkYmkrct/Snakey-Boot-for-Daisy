@@ -102,7 +102,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7);
+	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
+	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
 	  HAL_Delay (500);   /* Insert delay */
     /* USER CODE END WHILE */
 
