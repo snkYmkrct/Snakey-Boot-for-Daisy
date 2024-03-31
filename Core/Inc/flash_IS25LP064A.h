@@ -8,10 +8,14 @@
 #ifndef INC_FLASH_IS25LP064A_H_
 #define INC_FLASH_IS25LP064A_H_
 
-#define IS25LP064A_FLASH_SIZE 0x800000 /* 8 MBytes*/
-#define IS25LP064A_BLOCK_SIZE 0x10000 /* 2 * 1024 sectors of 64KBytes */
-#define IS25LP064A_SECTOR_SIZE 0x1000 /* 2 * 16384 sub sectors of 4kBytes */
-#define IS25LP064A_PAGE_SIZE 0x100    /* 2 * 262144 pages of 256 bytes */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define IS25LP064A_FLASH_SIZE 0x800000 /* 8  MBytes*/
+#define IS25LP064A_BLOCK_SIZE 0x10000  /* 64 KBytes */
+#define IS25LP064A_SECTOR_SIZE 0x1000  /* 4  KBytes */
+#define IS25LP064A_PAGE_SIZE 0x100     /* 256 bytes */
 
 #define IS25LP064A_DUMMY_CYCLES_READ_QUAD 8     /* & */
 #define IS25LP064A_DUMMY_CYCLES_READ 8          /* & */
@@ -158,5 +162,9 @@
 #define IS25LP064A_FSR_READY ((uint8_t)0x80) !< Ready or command in progress
 
 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_FLASH_IS25LP064A_H_ */
