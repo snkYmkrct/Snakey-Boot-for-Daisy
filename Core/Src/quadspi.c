@@ -499,7 +499,6 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
 }
 
 
-
 uint8_t
 CSP_QSPI_EnableMemoryMappedMode(void) {
 
@@ -508,18 +507,27 @@ CSP_QSPI_EnableMemoryMappedMode(void) {
 
     /* Enable Memory-Mapped mode-------------------------------------------------- */
 
-    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    sCommand.AddressSize = QSPI_ADDRESS_32_BITS;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    sCommand.Instruction = QUAD_INOUT_FAST_READ_CMD;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+    sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
     sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
     sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
     sCommand.DataMode = QSPI_DATA_4_LINES;
     sCommand.NbData = 0;
     sCommand.Address = 0;
-    sCommand.Instruction = QUAD_OUT_FAST_READ_CMD;
-    sCommand.DummyCycles = DUMMY_CLOCK_CYCLES_READ_QUAD;
+
+    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    //sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
+    //sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+    //sCommand.AlternateBytes = 0x000000A0;
+
+    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
+    //sCommand.DummyCycles = 6;
+
+    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+    //sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
+
 
     sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
 
