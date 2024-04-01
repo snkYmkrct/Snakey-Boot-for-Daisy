@@ -37,11 +37,11 @@ extern QSPI_HandleTypeDef hqspi;
 /* USER CODE BEGIN Private defines */
 
 uint8_t CSP_QUADSPI_Init(void);
+uint8_t CSP_QSPI_Erase_Chip (void);
 uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddress);
+uint8_t CSP_QSPI_EnableMemoryMappedMode(void);
 uint8_t CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
 uint8_t CSP_QSPI_ReadMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
-uint8_t CSP_QSPI_EnableMemoryMappedMode(void);
-uint8_t CSP_QSPI_Erase_Chip (void);
 
 /* USER CODE END Private defines */
 
