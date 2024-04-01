@@ -505,8 +505,10 @@ CSP_QSPI_EnableMemoryMappedMode(void) {
     QSPI_CommandTypeDef sCommand;
     QSPI_MemoryMappedTypeDef sMemMappedCfg;
 
-    /* Enable Memory-Mapped mode-------------------------------------------------- */
-
+    /* Enable Memory-Mapped mode
+		The FRQIO instruction allows the address bits to be input four bits at a time.
+		This may allow for code to be executed directly from the SPI in some applications.
+     */
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
     sCommand.Instruction = QUAD_INOUT_FAST_READ_CMD;
     sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
@@ -517,17 +519,11 @@ CSP_QSPI_EnableMemoryMappedMode(void) {
     sCommand.NbData = 0;
     sCommand.Address = 0;
 
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    //sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
-    //sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
-    //sCommand.AlternateBytes = 0x000000A0;
-
-    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
-    //sCommand.DummyCycles = 6;
-
-    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    //sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
-
+    sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
+    sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+    sCommand.AlternateBytes = 0x000000A0;
+    sCommand.DummyCycles = 6;
+    sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
 
     sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
 
