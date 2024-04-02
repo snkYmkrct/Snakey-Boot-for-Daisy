@@ -499,8 +499,7 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
 }
 
 
-uint8_t
-CSP_QSPI_EnableMemoryMappedMode(void) {
+uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
 
     QSPI_CommandTypeDef sCommand;
     QSPI_MemoryMappedTypeDef sMemMappedCfg;
@@ -522,7 +521,7 @@ CSP_QSPI_EnableMemoryMappedMode(void) {
     sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
     sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
     sCommand.AlternateBytes = 0x000000A0;
-    sCommand.DummyCycles = 6;
+    sCommand.DummyCycles = 6; //IS25LP064A_DUMMY_CYCLES_READ_QUAD;
     sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
 
     sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
@@ -533,8 +532,7 @@ CSP_QSPI_EnableMemoryMappedMode(void) {
     return HAL_OK;
 }
 
-uint8_t
-CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
+uint8_t CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
     QSPI_CommandTypeDef sCommand;
     uint32_t end_addr, current_size, current_addr;
@@ -542,10 +540,8 @@ CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
     /* Calculation of the size between the write address and the end of the page */
     current_addr = 0;
 
-
-    //
     while (current_addr <= address) {
-        current_addr += MEMORY_PAGE_SIZE;
+        current_addr += IS25LP064A_PAGE_SIZE;
     }
     current_size = current_addr - address;
 
@@ -554,18 +550,18 @@ CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
         current_size = buffer_size;
     }
 
-    /* Initialize the adress variables */
+    /* Initialize the address variables */
     current_addr = address;
     end_addr = address + buffer_size;
 
-    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    sCommand.AddressSize = QSPI_ADDRESS_32_BITS;
+    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
     sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
     sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
     sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    sCommand.Instruction = QUAD_IN_FAST_PROG_CMD;
-    sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
+    sCommand.Instruction = PAGE_PROG_CMD;
+    sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
     sCommand.DataMode = QSPI_DATA_4_LINES;
     sCommand.NbData = buffer_size;
     sCommand.Address = address;
@@ -607,94 +603,43 @@ CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
         current_addr += current_size;
         buffer += current_size;
         current_size =
-            ((current_addr + MEMORY_PAGE_SIZE) > end_addr) ?
-            (end_addr - current_addr) : MEMORY_PAGE_SIZE;
+            ((current_addr + IS25LP064A_PAGE_SIZE) > end_addr) ?
+            (end_addr - current_addr) : IS25LP064A_PAGE_SIZE;
     } while (current_addr <= end_addr);
 
     return HAL_OK;
 
 }
 
-uint8_t
-CSP_QSPI_ReadMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
+uint8_t CSP_QSPI_ReadMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
     QSPI_CommandTypeDef sCommand;
-    uint32_t end_addr, current_size, current_addr;
 
-    /* Calculation of the size between the write address and the end of the page */
-    current_addr = 0;
-
-
-    //
-    while (current_addr <= address) {
-        current_addr += MEMORY_PAGE_SIZE;
-    }
-    current_size = current_addr - address;
-
-    /* Check if the size of the data is less than the remaining place in the page */
-    if (current_size > buffer_size) {
-        current_size = buffer_size;
-    }
-
-    /* Initialize the adress variables */
-    current_addr = address;
-    end_addr = address + buffer_size;
-
-    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-    sCommand.AddressSize = QSPI_ADDRESS_32_BITS;
+    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
     sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
     sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
     sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
-    sCommand.Instruction = QUAD_IN_FAST_PROG_CMD;
-    sCommand.AddressMode = QSPI_ADDRESS_1_LINE;
+    sCommand.Instruction = QUAD_INOUT_FAST_READ_CMD;
+    sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
     sCommand.DataMode = QSPI_DATA_4_LINES;
     sCommand.NbData = buffer_size;
     sCommand.Address = address;
-    sCommand.DummyCycles = 0;
+    sCommand.DummyCycles = 6; //IS25LP064A_DUMMY_CYCLES_READ_QUAD;
 
-    /* Perform the write page by page */
-    do {
-        sCommand.Address = current_addr;
-        sCommand.NbData = current_size;
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
 
-        if (current_size == 0) {
-            return HAL_OK;
-        }
+		return HAL_ERROR;
+    }
 
-        /* Enable write operations */
-        if (QSPI_WriteEnable() != HAL_OK) {
-            return HAL_ERROR;
-        }
 
-        /* Configure the command */
-        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-            != HAL_OK) {
+	if (HAL_QSPI_Receive(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
 
-            return HAL_ERROR;
-        }
-
-        /* Transmission of the data */
-        if (HAL_QSPI_Transmit(&hqspi, buffer, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
-
-            return HAL_ERROR;
-        }
-
-        /* Configure automatic polling mode to wait for end of program */
-        if (QSPI_AutoPollingMemReady() != HAL_OK) {
-            return HAL_ERROR;
-        }
-
-        /* Update the address and size variables for next page programming */
-        current_addr += current_size;
-        buffer += current_size;
-        current_size =
-            ((current_addr + MEMORY_PAGE_SIZE) > end_addr) ?
-            (end_addr - current_addr) : MEMORY_PAGE_SIZE;
-    } while (current_addr <= end_addr);
+		return HAL_ERROR;
+	}
 
     return HAL_OK;
-
 }
 
 /* USER CODE END 1 */
