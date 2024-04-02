@@ -23,7 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+char *writebuf = "Hello world from QSPI !";
+
+uint8_t readbuf[100];
+
+uint16_t number = 1234;
+uint8_t buf[5];
 
 /* USER CODE END 0 */
 
@@ -96,6 +103,37 @@ int main(void)
   MX_QUADSPI_Init();
   /* USER CODE BEGIN 2 */
 
+  if (CSP_QUADSPI_Init() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+
+
+/****************** FOR SIMPLE WRITE READ ********************/
+	// Comment out these if you are using the EXT MEM BOOT
+
+/*
+  if (CSP_QSPI_Erase_Chip() != HAL_OK)
+  {
+	  Error_Handler();
+  }
+
+  //sprintf (buf, "%u", number);
+  if (CSP_QSPI_Write(buf, 0, strlen (writebuf)) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+
+
+  if (CSP_QSPI_ReadInNonMemoryMapped(readbuf, 0, 100) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+*/
+
+/*************************************************/
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -104,7 +142,7 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (500);   /* Insert delay */
+	  HAL_Delay (5000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
 	  HAL_Delay (300);   /* Insert delay */
     /* USER CODE END WHILE */

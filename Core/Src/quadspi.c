@@ -521,7 +521,7 @@ uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
     sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
     sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
     sCommand.AlternateBytes = 0x000000A0;
-    sCommand.DummyCycles = 6; //IS25LP064A_DUMMY_CYCLES_READ_QUAD;
+    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
     sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
 
     sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
@@ -532,7 +532,7 @@ uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
     return HAL_OK;
 }
 
-uint8_t CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
+uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
     QSPI_CommandTypeDef sCommand;
     uint32_t end_addr, current_size, current_addr;
@@ -611,7 +611,7 @@ uint8_t CSP_QSPI_WriteMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_
 
 }
 
-uint8_t CSP_QSPI_ReadMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
+uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
     QSPI_CommandTypeDef sCommand;
 
@@ -626,7 +626,7 @@ uint8_t CSP_QSPI_ReadMemory(uint8_t* buffer, uint32_t address, uint32_t buffer_s
     sCommand.DataMode = QSPI_DATA_4_LINES;
     sCommand.NbData = buffer_size;
     sCommand.Address = address;
-    sCommand.DummyCycles = 6; //IS25LP064A_DUMMY_CYCLES_READ_QUAD;
+    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
 
     if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
 
