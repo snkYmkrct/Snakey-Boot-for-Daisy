@@ -27,6 +27,7 @@ static uint8_t QSPI_WriteEnable(void);
 static uint8_t QSPI_AutoPollingMemReady(void);
 static uint8_t QSPI_Configuration(void);
 static uint8_t QSPI_ResetChip(void);
+static uint8_t QSPI_ReadJEDECID(void);
 
 static uint8_t qspi_enabled = 0;
 
@@ -50,7 +51,7 @@ void MX_QUADSPI_Init(void)
   hqspi.Init.FifoThreshold = 1;
   hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
   hqspi.Init.FlashSize = 22;
-  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_1_CYCLE;
+  hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
   hqspi.Init.FlashID = QSPI_FLASH_ID_1;
   hqspi.Init.DualFlash = QSPI_DUALFLASH_DISABLE;
@@ -177,17 +178,56 @@ uint8_t CSP_QUADSPI_Init(void) {
         return HAL_ERROR;
     }
 
+    // -------------------------------------------------
+    if (QSPI_ReadJEDECID() != HAL_OK) {
+            return HAL_ERROR;
+    }
+    // -------------------------------------------------
+
     if (QSPI_WriteEnable() != HAL_OK) {
 
         return HAL_ERROR;
     }
 
+/*
+
     if (QSPI_Configuration() != HAL_OK) {
         return HAL_ERROR;
     }
+*/
 
     return HAL_OK;
 }
+
+uint8_t QSPI_ReadJEDECID() {
+    QSPI_CommandTypeDef sCommand;
+    uint8_t jedecID[3] = { 0, 0, 0 };
+
+    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
+    sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+    sCommand.Instruction = READ_ID_CMD2;
+    sCommand.AddressMode = QSPI_ADDRESS_NONE;
+    sCommand.Address = 0;
+    sCommand.DataMode = QSPI_DATA_1_LINE;
+    sCommand.DummyCycles = 0;
+    sCommand.NbData = 3;
+
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
+            != HAL_OK) {
+        return HAL_ERROR;
+    }
+    if (HAL_QSPI_Receive(&hqspi, jedecID, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
+            != HAL_OK) {
+        return HAL_ERROR;
+    }
+    return HAL_OK;
+}
+
+
 
 uint8_t QSPI_ResetChip() {
     QSPI_CommandTypeDef sCommand;
