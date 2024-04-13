@@ -358,15 +358,16 @@ static uint8_t QSPI_WriteEnable(void) {
     sConfig.Mask = IS25LP064A_SR_WREN;
     sConfig.MatchMode = QSPI_MATCH_MODE_AND;
     sConfig.StatusBytesSize = 1;
-    sConfig.Interval = 0x10;
     sConfig.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
 
     sCommand.Instruction = READ_STATUS_REG_CMD;
     if (qspi_enabled){
     	sCommand.DataMode = QSPI_DATA_4_LINES;
+    	sConfig.Interval = 0x4;
     }
     else {
     	sCommand.DataMode = QSPI_DATA_1_LINE;
+    	sConfig.Interval = 0x10;
     }
     if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig,
                              HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
@@ -682,7 +683,9 @@ uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32
 
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
     sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
+    sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+    sCommand.AlternateBytes = 0x000000A0;
     sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
     sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
     sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
@@ -691,7 +694,7 @@ uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32
     sCommand.DataMode = QSPI_DATA_4_LINES;
     sCommand.NbData = buffer_size;
     sCommand.Address = address;
-    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
+    sCommand.DummyCycles = 6;//IS25LP064A_DUMMY_CYCLES_READ_QUAD;
 
     if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
 

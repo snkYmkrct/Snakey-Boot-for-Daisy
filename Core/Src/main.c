@@ -59,7 +59,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 char *writebuf = "Hello world from QSPI !";
 
-uint8_t readbuf[100];
+uint8_t readbuf[100] = {0};
 
 uint16_t number = 1234;
 uint8_t buf[5];
@@ -124,9 +124,9 @@ int main(void)
   // flash controller hanging, unstable state, if the board was reset in the middle of
   // a flash command, like reset chip (which possibly lasts 45 seconds)
   // 1 second delay stops that from happening
-  HAL_Delay (1000);
+  HAL_Delay (2000);
   fflush(stdout);
-  printf("  HIIIIII delay 1 sec \r\n");
+  printf("  HIIIIII delay 2 sec \r\n");
 
   TEST_QSPI_ExitQPIMODE();
   printf("  after exit qpi \r\n");
@@ -146,25 +146,33 @@ int main(void)
 	  Error_Handler();
   }
   printf("   erase successful !!!!!!!!!!!!!    \r\n");
-  /*
+
   //sprintf (buf, "%u", number);
+  printf("buffer to write: %s   \r\n", writebuf);
+/*
   if (CSP_QSPI_Write(buf, 0, strlen (writebuf)) != HAL_OK)
   {
 	  Error_Handler();
   }
-
-
-  if (CSP_QSPI_ReadInNonMemoryMapped(readbuf, 0, 100) != HAL_OK)
-  {
-	  Error_Handler();
-  }
+  printf("   written!!!!!   \r\n");
 */
+
+
+/*  if (CSP_QSPI_ReadInNonMemoryMapped(readbuf, 0, 100) != HAL_OK)
+  {
+	  printf("-----> read  error  \r\n");
+	  Error_Handler();
+  }*/
+
+  printf("read: %s  pew pew \r\n", readbuf);
+  printf("and mew\r\n\r\n");
 
   if (TEST_QSPI_ExitQPIMODE() != HAL_OK)
   {
+	  printf("-----> exit quad spi  error  \r\n");
 	  Error_Handler();
   }
-
+  printf("  and another exit qpi \r\n");
 
   /* USER CODE END 2 */
 
@@ -174,9 +182,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_Delay (100);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_Delay (100);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
