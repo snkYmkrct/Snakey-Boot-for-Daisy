@@ -118,6 +118,12 @@ int main(void)
   MX_QUADSPI_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+
+  // When flashing code over STLink, the code starts running before flashing is done,
+  // and the STLink resets the board in the middle of configuration calls, leaving the
+  // flash controller hanging, unstable state, if the board was reset in the middle of
+  // a flash command, like reset chip (which possibly lasts 45 seconds)
+  // 1 second delay stops that from happening
   HAL_Delay (1000);
   fflush(stdout);
   printf("  HIIIIII delay 1 sec \r\n");
