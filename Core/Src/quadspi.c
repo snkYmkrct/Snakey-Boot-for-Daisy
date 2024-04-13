@@ -27,7 +27,9 @@ static uint8_t QSPI_WriteEnable(void);
 static uint8_t QSPI_AutoPollingMemReady(void);
 static uint8_t QSPI_Configuration(void);
 static uint8_t QSPI_ResetChip(void);
+// ---------------------------------------------------------------
 static uint8_t QSPI_ReadJEDECID(void);
+static uint8_t QSPI_ReadStatusRegister(uint8_t *status);
 
 static uint8_t qspi_enabled = 0;
 
@@ -146,8 +148,7 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
     */
     HAL_GPIO_DeInit(GPIOG, GPIO_PIN_6);
 
-    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10|GPIO_PIN_9
-                          |GPIO_PIN_8);
+    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8);
 
   /* USER CODE BEGIN QUADSPI_MspDeInit 1 */
 
@@ -199,6 +200,7 @@ uint8_t CSP_QUADSPI_Init(void) {
     return HAL_OK;
 }
 
+// -------------------------------------------------------------------------------------
 uint8_t QSPI_ReadJEDECID() {
     QSPI_CommandTypeDef sCommand = {0};
     uint8_t jedecID[3] = { 0, 0, 0 };
@@ -216,17 +218,41 @@ uint8_t QSPI_ReadJEDECID() {
     sCommand.DummyCycles = 0;
     sCommand.NbData = 3;
 
-    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-            != HAL_OK) {
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
-    if (HAL_QSPI_Receive(&hqspi, jedecID, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-            != HAL_OK) {
+    if (HAL_QSPI_Receive(&hqspi, jedecID, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
     return HAL_OK;
 }
 
+
+uint8_t QSPI_ReadStatusRegister(uint8_t *status) {
+    QSPI_CommandTypeDef sCommand = {0};
+
+    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
+    sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+    sCommand.Instruction = READ_STATUS_REG_CMD;
+    sCommand.AddressMode = QSPI_ADDRESS_NONE;
+    sCommand.Address = 0;
+    sCommand.DataMode = QSPI_DATA_1_LINE;
+    sCommand.DummyCycles = 0;
+    sCommand.NbData = 1;
+
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        return HAL_ERROR;
+    }
+    if (HAL_QSPI_Receive(&hqspi, status, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        return HAL_ERROR;
+    }
+    return HAL_OK;
+}
+// -------------------------------------------------------------------------------------
 
 
 uint8_t QSPI_ResetChip() {
@@ -245,8 +271,7 @@ uint8_t QSPI_ResetChip() {
     sCommand.DataMode = QSPI_DATA_NONE;
     sCommand.DummyCycles = 0;
 
-    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-        != HAL_OK) {
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -262,8 +287,7 @@ uint8_t QSPI_ResetChip() {
     sCommand.DataMode = QSPI_DATA_NONE;
     sCommand.DummyCycles = 0;
 
-    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-        != HAL_OK) {
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
     return HAL_OK;
@@ -326,8 +350,7 @@ static uint8_t QSPI_WriteEnable(void) {
     sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
     sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
 
-    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-        != HAL_OK) {
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -419,9 +442,13 @@ uint8_t QSPI_Configuration(void) {
         return HAL_ERROR;
     }
 
-    reg = IS25LP064A_SR_QE;
-    if (HAL_QSPI_Transmit(&hqspi, &reg,
-                          HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    reg = 0;
+    if (QSPI_ReadStatusRegister(&reg) != HAL_OK) {
+    	return HAL_ERROR;
+    }
+    reg = reg | IS25LP064A_SR_QE;
+    //reg = IS25LP064A_SR_QE;
+    if (HAL_QSPI_Transmit(&hqspi, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         Error_Handler();
         return HAL_ERROR;
     }
@@ -457,8 +484,7 @@ uint8_t QSPI_Configuration(void) {
     sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
     sCommand.NbData = 0;
 
-    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-        != HAL_OK) {
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
     qspi_enabled = 1;  /* qpi mode ON */
@@ -678,6 +704,30 @@ uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32
 
 		return HAL_ERROR;
 	}
+
+    return HAL_OK;
+}
+//------------------------------------------------------
+uint8_t TEST_QSPI_ExitQPIMODE() {
+    QSPI_CommandTypeDef sCommand = { 0 };
+
+    if (qspi_enabled) {
+
+        sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+        sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+        sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+        sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
+        sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+        sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+        sCommand.Instruction = EXIT_QUAD_CMD;
+        sCommand.AddressMode = QSPI_ADDRESS_NONE;
+
+        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)!= HAL_OK) {
+            return HAL_ERROR;
+        }
+        qspi_enabled = 0;
+
+    }
 
     return HAL_OK;
 }

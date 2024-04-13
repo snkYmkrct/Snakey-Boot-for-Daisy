@@ -42,6 +42,8 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
 uint8_t CSP_QSPI_EnableMemoryMappedMode(void);
 uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
 uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
+//---------------------------------------------
+uint8_t TEST_QSPI_ExitQPIMODE();
 
 /* USER CODE END Private defines */
 
