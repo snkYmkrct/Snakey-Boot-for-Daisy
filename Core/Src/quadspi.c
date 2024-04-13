@@ -200,7 +200,7 @@ uint8_t CSP_QUADSPI_Init(void) {
 }
 
 uint8_t QSPI_ReadJEDECID() {
-    QSPI_CommandTypeDef sCommand;
+    QSPI_CommandTypeDef sCommand = {0};
     uint8_t jedecID[3] = { 0, 0, 0 };
 
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
@@ -230,7 +230,7 @@ uint8_t QSPI_ReadJEDECID() {
 
 
 uint8_t QSPI_ResetChip() {
-    QSPI_CommandTypeDef sCommand;
+    QSPI_CommandTypeDef sCommand = {0};
 
     /* Erasing Sequence -------------------------------------------------- */
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
@@ -271,8 +271,8 @@ uint8_t QSPI_ResetChip() {
 
 uint8_t QSPI_AutoPollingMemReady(void) {
 
-    QSPI_CommandTypeDef sCommand;
-    QSPI_AutoPollingTypeDef sConfig;
+    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
 
     /* Configure automatic polling mode to wait for memory ready ------ */
     if (qspi_enabled){
@@ -307,8 +307,8 @@ uint8_t QSPI_AutoPollingMemReady(void) {
 }
 
 static uint8_t QSPI_WriteEnable(void) {
-    QSPI_CommandTypeDef sCommand;
-    QSPI_AutoPollingTypeDef sConfig;
+    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
 
     /* Enable write operations ------------------------------------------ */
     if (qspi_enabled){
@@ -357,9 +357,9 @@ static uint8_t QSPI_WriteEnable(void) {
 /*Enable quad mode and set dummy cycles count*/
 uint8_t QSPI_Configuration(void) {
 
-    QSPI_CommandTypeDef sCommand;
-    QSPI_AutoPollingTypeDef sConfig;
-    uint8_t reg;
+    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
+    uint8_t reg = 0;
 
     /*----- Setting the dummy cycles ----*/
     if (QSPI_WriteEnable() != HAL_OK) {
@@ -467,7 +467,7 @@ uint8_t QSPI_Configuration(void) {
 }
 
 uint8_t CSP_QSPI_Erase_Chip(void) {
-    QSPI_CommandTypeDef sCommand;
+    QSPI_CommandTypeDef sCommand = {0};
 
     if (QSPI_WriteEnable() != HAL_OK) {
         return HAL_ERROR;
@@ -500,7 +500,7 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
 
 uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
 
-    QSPI_CommandTypeDef sCommand;
+    QSPI_CommandTypeDef sCommand = {0};
 
     /* Erasing Sequence -------------------------------------------------- */
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
@@ -541,8 +541,8 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
 
 uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
 
-    QSPI_CommandTypeDef sCommand;
-    QSPI_MemoryMappedTypeDef sMemMappedCfg;
+    QSPI_CommandTypeDef sCommand = {0};
+    QSPI_MemoryMappedTypeDef sMemMappedCfg = {0};
 
     /* Enable Memory-Mapped mode
 		The FRQIO instruction allows the address bits to be input four bits at a time.
@@ -574,8 +574,8 @@ uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
 
 uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
-    QSPI_CommandTypeDef sCommand;
-    uint32_t end_addr, current_size, current_addr;
+    QSPI_CommandTypeDef sCommand = {0};
+    uint32_t end_addr = 0, current_size = 0, current_addr = 0;
 
     /* Calculation of the size between the write address and the end of the page */
     current_addr = 0;
@@ -653,7 +653,7 @@ uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) 
 
 uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
-    QSPI_CommandTypeDef sCommand;
+    QSPI_CommandTypeDef sCommand = {0};
 
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
     sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
