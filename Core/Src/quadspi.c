@@ -148,7 +148,8 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
     */
     HAL_GPIO_DeInit(GPIOG, GPIO_PIN_6);
 
-    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10|GPIO_PIN_9|GPIO_PIN_8);
+    HAL_GPIO_DeInit(GPIOF, GPIO_PIN_7|GPIO_PIN_6|GPIO_PIN_10|GPIO_PIN_9
+                          |GPIO_PIN_8);
 
   /* USER CODE BEGIN QUADSPI_MspDeInit 1 */
 
@@ -185,17 +186,15 @@ uint8_t CSP_QUADSPI_Init(void) {
     }
     // -------------------------------------------------
 
-    if (QSPI_WriteEnable() != HAL_OK) {
+/*    if (QSPI_WriteEnable() != HAL_OK) {
 
         return HAL_ERROR;
-    }
+    }*/
 
-/*
 
     if (QSPI_Configuration() != HAL_OK) {
         return HAL_ERROR;
     }
-*/
 
     return HAL_OK;
 }
@@ -302,10 +301,12 @@ uint8_t QSPI_AutoPollingMemReady(void) {
     if (qspi_enabled){
     	sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
         sCommand.DataMode = QSPI_DATA_4_LINES;
+        sConfig.Interval = 0x4;
     }
     else {
     	sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
         sCommand.DataMode = QSPI_DATA_1_LINE;
+        sConfig.Interval = 0x10;
     }
     sCommand.Instruction = READ_STATUS_REG_CMD;
     sCommand.AddressMode = QSPI_ADDRESS_NONE;
@@ -319,11 +320,9 @@ uint8_t QSPI_AutoPollingMemReady(void) {
     sConfig.Mask = IS25LP064A_SR_WIP;
     sConfig.MatchMode = QSPI_MATCH_MODE_AND;
     sConfig.StatusBytesSize = 1;
-    sConfig.Interval = 0x10;
     sConfig.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
 
-    if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig,
-                             HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -385,10 +384,10 @@ uint8_t QSPI_Configuration(void) {
     uint8_t reg = 0;
 
     /*----- Setting the dummy cycles ----*/
-    if (QSPI_WriteEnable() != HAL_OK) {
-
-        return HAL_ERROR;
-    }
+//    if (QSPI_WriteEnable() != HAL_OK) {
+//
+//        return HAL_ERROR;
+//    }
 
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
@@ -408,8 +407,7 @@ uint8_t QSPI_Configuration(void) {
 
     /* Setting in Read Register P4P3 bits as 10, so full reg = 11110000 */
     reg = 0xF0;
-    if (HAL_QSPI_Transmit(&hqspi, &reg,
-                          HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (HAL_QSPI_Transmit(&hqspi, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         Error_Handler();
         return HAL_ERROR;
     }
@@ -499,7 +497,7 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
         return HAL_ERROR;
     }
 
-    sCommand.Instruction = CHIP_ERASE_CMD;
+    sCommand.Instruction = EXT_CHIP_ERASE_CMD;
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
     sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
@@ -516,6 +514,9 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
         != HAL_OK) {
         return HAL_ERROR;
     }
+
+    // wait the max chip erase time, or other commands will get ignored
+    HAL_Delay (IS25LP064A_DIE_ERASE_MAX_TIME);
 
     if (QSPI_AutoPollingMemReady() != HAL_OK) {
         return HAL_ERROR;
@@ -541,8 +542,7 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
     sCommand.DataMode = QSPI_DATA_NONE;
     sCommand.DummyCycles = 0;
 
-    EraseStartAddress = EraseStartAddress
-                        - EraseStartAddress % IS25LP064A_SECTOR_SIZE;
+    EraseStartAddress = EraseStartAddress - EraseStartAddress % IS25LP064A_SECTOR_SIZE;
 
     while (EraseEndAddress >= EraseStartAddress) {
         sCommand.Address = (EraseStartAddress & 0x7FFFFF);
@@ -551,8 +551,7 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
             return HAL_ERROR;
         }
 
-        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)
-            != HAL_OK) {
+        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE)!= HAL_OK) {
             return HAL_ERROR;
         }
         EraseStartAddress += IS25LP064A_SECTOR_SIZE;
@@ -711,7 +710,7 @@ uint8_t CSP_QSPI_ReadInNonMemoryMapped(uint8_t* buffer, uint32_t address, uint32
 uint8_t TEST_QSPI_ExitQPIMODE() {
     QSPI_CommandTypeDef sCommand = { 0 };
 
-    if (qspi_enabled) {
+//    if (qspi_enabled) {
 
         sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
         sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
@@ -727,7 +726,7 @@ uint8_t TEST_QSPI_ExitQPIMODE() {
         }
         qspi_enabled = 0;
 
-    }
+ //   }
 
     return HAL_OK;
 }

@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "quadspi.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -63,6 +64,20 @@ uint8_t readbuf[100];
 uint16_t number = 1234;
 uint8_t buf[5];
 
+int __io_putchar(int ch) {
+	HAL_UART_Transmit(&huart4, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
+
+	return ch;
+}
+
+int __io_getchar(void) {
+	uint8_t ch = 0;
+
+	HAL_UART_Receive(&huart4, &ch, 1, HAL_MAX_DELAY);
+
+	return ch;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -101,25 +116,31 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_QUADSPI_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay (1000);
+  fflush(stdout);
+  printf("  HIIIIII delay 1 sec \r\n");
+
+  TEST_QSPI_ExitQPIMODE();
+  printf("  after exit qpi \r\n");
 
   if (CSP_QUADSPI_Init() != HAL_OK)
   {
+	  printf("-----> quad spi init error  \r\n");
 	  Error_Handler();
   }
 
-
-/****************** FOR SIMPLE WRITE READ ********************/
-	// Comment out these if you are using the EXT MEM BOOT
-
-
-/*
+  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+  printf("   LED ON before erase   \r\n");
+  HAL_Delay (1);
 
   if (CSP_QSPI_Erase_Chip() != HAL_OK)
   {
 	  Error_Handler();
   }
-
+  printf("   erase successful !!!!!!!!!!!!!    \r\n");
+  /*
   //sprintf (buf, "%u", number);
   if (CSP_QSPI_Write(buf, 0, strlen (writebuf)) != HAL_OK)
   {
@@ -133,8 +154,10 @@ int main(void)
   }
 */
 
-
-/*************************************************/
+  if (TEST_QSPI_ExitQPIMODE() != HAL_OK)
+  {
+	  Error_Handler();
+  }
 
 
   /* USER CODE END 2 */
@@ -145,9 +168,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (3000);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (3000);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -25,8 +25,8 @@ extern "C" {
 
 
 #define IS25LP064A_DIE_ERASE_MAX_TIME 46000 /* 45 max seconds in datasheet */
-#define IS25LP064A_BLOCK_ERASE_MAX_TIME 1500 /* 1000 ms max in datasheet */
-#define IS25LP064A_SECTOR_ERASE_MAX_TIME 400 /* 300 ms max in datasheet */
+#define IS25LP064A_BLOCK_ERASE_MAX_TIME 1100 /* 1000 ms max in datasheet */
+#define IS25LP064A_SECTOR_ERASE_MAX_TIME 350 /* 300 ms max in datasheet */
 
 
 	/* Low Power Modes */
