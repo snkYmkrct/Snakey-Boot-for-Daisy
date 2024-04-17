@@ -17,6 +17,9 @@ extern "C" {
 #define IS25LP064A_SECTOR_SIZE 0x1000  /* 4  KBytes */
 #define IS25LP064A_PAGE_SIZE 0x100     /* 256 bytes */
 
+#define IS25LP064A_SECTOR_COUNT 2048
+
+
 #define IS25LP064A_DUMMY_CYCLES_READ_QUAD 8     /* & */
 #define IS25LP064A_DUMMY_CYCLES_READ 8          /* & */
 /* Not sure about these values, and DTR not used anyway */

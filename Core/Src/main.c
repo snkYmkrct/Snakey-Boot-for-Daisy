@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include "string.h"
 #include "stdio.h"
+#include "flash_IS25LP064A.h"  // TODO should not be here, just for testing purposes
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,9 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static uint8_t buffer_test[IS25LP064A_SECTOR_SIZE];
+static uint32_t var = 0;
+
 char *writebuf = "Hello world from QSPI !";
 
 uint8_t readbuf[100] = {0};
@@ -137,6 +141,45 @@ int main(void)
 	  Error_Handler();
   }
 
+  printf(" ~~~~~    starting write --- read test  \r\n");
+
+  for (var = 0; var < IS25LP064A_SECTOR_SIZE; var++) {
+          buffer_test[var] = (var & 0xff);
+      }
+
+      for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
+          if (CSP_QSPI_EraseSector(var * IS25LP064A_SECTOR_SIZE,
+                  (var + 1) * IS25LP064A_SECTOR_SIZE - 1) != HAL_OK) {
+        	  printf("-----> erase sector error  var = %d \r\n", var);
+
+              while (1)
+                  ;  //breakpoint - error detected
+          }
+          if (CSP_QSPI_Write(buffer_test, var * IS25LP064A_SECTOR_SIZE,
+                  IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+        	  printf("-----> write sector error  var = %d \r\n", var);
+              while (1)
+                  ;  //breakpoint - error detected
+          }
+      }
+
+      if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+    	  printf("-----> enable memory mapped mode error \r\n");
+          while (1)
+              ; //breakpoint - error detected
+      }
+      uint8_t read_back[IS25LP064A_SECTOR_SIZE];
+      for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
+          memcpy(read_back,(uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE),IS25LP064A_SECTOR_SIZE);
+          if (memcmp(buffer_test,
+                  read_back,IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+        	  printf("-----> read sector error  var = %d \r\n", var);
+              while (1)
+                  ;  //breakpoint - error detected - otherwise QSPI works properly
+          }
+      }
+      printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
+/*
   HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
   printf("   LED ON before erase   \r\n");
   HAL_Delay (1);
@@ -146,9 +189,10 @@ int main(void)
 	  Error_Handler();
   }
   printf("   erase successful !!!!!!!!!!!!!    \r\n");
+*/
 
   //sprintf (buf, "%u", number);
-  printf("buffer to write: %s   \r\n", writebuf);
+  //printf("buffer to write: %s   \r\n", writebuf);
 /*
   if (CSP_QSPI_Write(buf, 0, strlen (writebuf)) != HAL_OK)
   {
@@ -164,7 +208,7 @@ int main(void)
 	  Error_Handler();
   }*/
 
-  printf("read: %s  pew pew \r\n", readbuf);
+/*  printf("read: %s  pew pew \r\n", readbuf);
   printf("and mew\r\n\r\n");
 
   if (TEST_QSPI_ExitQPIMODE() != HAL_OK)
@@ -172,7 +216,7 @@ int main(void)
 	  printf("-----> exit quad spi  error  \r\n");
 	  Error_Handler();
   }
-  printf("  and another exit qpi \r\n");
+  printf("  and another exit qpi \r\n");*/
 
   /* USER CODE END 2 */
 
@@ -182,9 +226,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (100);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (100);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
