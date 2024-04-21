@@ -24,7 +24,7 @@
 #include "flash_IS25LP064A.h"
 
 static uint8_t QSPI_WriteEnable(void);
-static uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout);
+static uint8_t QSPI_AutoPollingMemReady(const QSPI_AutoPollingTypeDef *config, uint32_t timeout);
 static uint8_t QSPI_Configuration(void);
 static uint8_t QSPI_ResetChip(void);
 // ---------------------------------------------------------------
@@ -188,9 +188,14 @@ uint8_t CSP_QUADSPI_Init(void) {
         return HAL_ERROR;
     }
 
-    if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    QSPI_AutoPollingTypeDef sConfig = {0};
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
+
+    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
+
 
     if (QSPI_Configuration() != HAL_OK) {
         return HAL_ERROR;
@@ -275,43 +280,24 @@ uint8_t QSPI_ResetChip() {
     return HAL_OK;
 }
 
-uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout) {
+uint8_t QSPI_AutoPollingMemReady(const QSPI_AutoPollingTypeDef *config, uint32_t timeout) {
 
-    QSPI_CommandTypeDef sCommand = {0};
-    QSPI_AutoPollingTypeDef sConfig = {0};
+	uint8_t status = 0;
+	uint32_t tickstart = HAL_GetTick();
 
-    // Configure automatic polling mode to wait for memory ready ------
-    if (qspi_enabled){
-    	sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-        sCommand.DataMode = QSPI_DATA_4_LINES;
-        // Based on Reference manual RM0433 for the STM32H750 Value line,
-        // dummy cycles needed on all read operations in QUAD mode
-        sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
-    }
-    else {
-    	sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
-        sCommand.DataMode = QSPI_DATA_1_LINE;
-        sCommand.DummyCycles = 0;
-    }
-    sCommand.Instruction = READ_STATUS_REG_CMD;
-    sCommand.AddressMode = QSPI_ADDRESS_NONE;
-    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
-    sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+	do {
+		if ((HAL_GetTick() - tickstart) > timeout) {
+			return HAL_QSPI_ERROR_TIMEOUT;
+		}
 
-    sConfig.Match = 0x00;
-    sConfig.Mask = IS25LP064A_SR_WIP;
-    sConfig.MatchMode = QSPI_MATCH_MODE_AND;
-    sConfig.StatusBytesSize = 1;
-    sConfig.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
-    sConfig.Interval = 0x10;
+		if (QSPI_ReadStatusRegister(&status) != HAL_OK) {
+			return HAL_ERROR;
+		}
 
-    if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig, Timeout) != HAL_OK) {
-        return HAL_ERROR;
-    }
+	} while ((status & config->Mask) != config->Match);
 
-    return HAL_OK;
+	return HAL_OK;
+
 }
 
 static uint8_t QSPI_WriteEnable(void) {
@@ -341,22 +327,8 @@ static uint8_t QSPI_WriteEnable(void) {
     /* Configure automatic polling mode to wait for write enabling ---- */
     sConfig.Match = IS25LP064A_SR_WREN;
     sConfig.Mask = IS25LP064A_SR_WREN;
-    sConfig.MatchMode = QSPI_MATCH_MODE_AND;
-    sConfig.StatusBytesSize = 1;
-    sConfig.Interval = 0x10;
-    sConfig.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
 
-    sCommand.Instruction = READ_STATUS_REG_CMD;
-    if (qspi_enabled){
-    	sCommand.DataMode = QSPI_DATA_4_LINES;
-        // Based on Reference manual RM0433 for the STM32H750 Value line,
-        // dummy cycles needed on all read operations in QUAD mode
-        sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
-    }
-    else {
-    	sCommand.DataMode = QSPI_DATA_1_LINE;
-    }
-    if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -394,7 +366,10 @@ uint8_t QSPI_Configuration(void) {
         return HAL_ERROR;
     }
 
-    if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
+
+    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -433,20 +408,16 @@ uint8_t QSPI_Configuration(void) {
     /* Configure automatic polling mode to wait for quad enable complete */
     sConfig.Match = IS25LP064A_SR_QE;
     sConfig.Mask = IS25LP064A_SR_QE;
-    sConfig.MatchMode = QSPI_MATCH_MODE_AND;
-    sConfig.StatusBytesSize = 1;
-    sConfig.Interval = 0x10;
-    sConfig.AutomaticStop = QSPI_AUTOMATIC_STOP_ENABLE;
 
-    sCommand.Instruction = READ_STATUS_REG_CMD;
-    sCommand.DataMode = QSPI_DATA_1_LINE;
-
-    if (HAL_QSPI_AutoPolling(&hqspi, &sCommand, &sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
     /* Wait to make sure controller is done with writing */
-    if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
+
+    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -472,6 +443,7 @@ uint8_t QSPI_Configuration(void) {
 
 uint8_t CSP_QSPI_Erase_Chip(void) {
     QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
 
     if (QSPI_WriteEnable() != HAL_OK) {
         return HAL_ERROR;
@@ -495,7 +467,10 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
     }
 
     // Poll until the max chip erase time, or other commands will get ignored
-    if (QSPI_AutoPollingMemReady(IS25LP064A_DIE_ERASE_MAX_TIME) != HAL_OK) {
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
+
+    if (QSPI_AutoPollingMemReady(&sConfig, IS25LP064A_DIE_ERASE_MAX_TIME) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -505,6 +480,7 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
 uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
 
     QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
 
     /* Erasing Sequence -------------------------------------------------- */
     sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
@@ -518,6 +494,9 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
 
     sCommand.DataMode = QSPI_DATA_NONE;
     sCommand.DummyCycles = 0;
+
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
 
     EraseStartAddress = EraseStartAddress - EraseStartAddress % IS25LP064A_SECTOR_SIZE;
 
@@ -533,7 +512,7 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
         }
         EraseStartAddress += IS25LP064A_SECTOR_SIZE;
 
-        if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
         }
     }
@@ -610,6 +589,7 @@ uint8_t CSP_QSPI_DisableMemoryMappedMode(void) {
 uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) {
 
     QSPI_CommandTypeDef sCommand = {0};
+    QSPI_AutoPollingTypeDef sConfig = {0};
     uint32_t end_addr = 0, current_size = 0, current_addr = 0;
 
     /* Calculation of the size between the write address and the end of the page */
@@ -642,6 +622,9 @@ uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) 
     sCommand.Address = address;
     sCommand.DummyCycles = 0;
 
+    sConfig.Match = 0;
+    sConfig.Mask = IS25LP064A_SR_WIP;
+
     /* Perform the write page by page */
     do {
         sCommand.Address = current_addr;
@@ -669,7 +652,7 @@ uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) 
         }
 
         /* Configure automatic polling mode to wait for end of program */
-        if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
         }
 

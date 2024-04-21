@@ -126,9 +126,9 @@ int main(void)
   // flash controller hanging, unstable state, if the board was reset in the middle of
   // a flash command, like reset chip (which possibly lasts 45 seconds)
   // 1 second delay stops that from happening
-  HAL_Delay (3000);
+  //HAL_Delay (3000);
   fflush(stdout);
-  printf("  HIIIIII delay again -- init qpi errors again ??? \r\n");
+  printf("  HIIIIII no delay !!!  \r\n");
 
   TEST_QSPI_ExitQPIMODE();
   printf("  after exit qpi \r\n");
