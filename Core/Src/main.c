@@ -128,7 +128,7 @@ int main(void)
   // 1 second delay stops that from happening
   //HAL_Delay (3000);
   fflush(stdout);
-  printf("  HIIIIII no delay !!!  \r\n");
+  printf("  HIIIIII no delay ``````  \r\n");
 
   TEST_QSPI_ExitQPIMODE();
   printf("  after exit qpi \r\n");

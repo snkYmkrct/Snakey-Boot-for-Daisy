@@ -24,7 +24,7 @@
 #include "flash_IS25LP064A.h"
 
 static uint8_t QSPI_WriteEnable(void);
-static uint8_t QSPI_AutoPollingMemReady(const QSPI_AutoPollingTypeDef *config, uint32_t timeout);
+static uint8_t QSPI_Wait(const QSPI_AutoPollingTypeDef *config, uint32_t timeout);
 static uint8_t QSPI_Configuration(void);
 static uint8_t QSPI_ResetChip(void);
 // ---------------------------------------------------------------
@@ -192,7 +192,7 @@ uint8_t CSP_QUADSPI_Init(void) {
     sConfig.Match = 0;
     sConfig.Mask = IS25LP064A_SR_WIP;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -280,7 +280,7 @@ uint8_t QSPI_ResetChip() {
     return HAL_OK;
 }
 
-uint8_t QSPI_AutoPollingMemReady(const QSPI_AutoPollingTypeDef *config, uint32_t timeout) {
+uint8_t QSPI_Wait(const QSPI_AutoPollingTypeDef *config, uint32_t timeout) {
 
 	uint8_t status = 0;
 	uint32_t tickstart = HAL_GetTick();
@@ -328,7 +328,7 @@ static uint8_t QSPI_WriteEnable(void) {
     sConfig.Match = IS25LP064A_SR_WREN;
     sConfig.Mask = IS25LP064A_SR_WREN;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -369,7 +369,7 @@ uint8_t QSPI_Configuration(void) {
     sConfig.Match = 0;
     sConfig.Mask = IS25LP064A_SR_WIP;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -409,7 +409,7 @@ uint8_t QSPI_Configuration(void) {
     sConfig.Match = IS25LP064A_SR_QE;
     sConfig.Mask = IS25LP064A_SR_QE;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -417,7 +417,7 @@ uint8_t QSPI_Configuration(void) {
     sConfig.Match = 0;
     sConfig.Mask = IS25LP064A_SR_WIP;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -470,7 +470,7 @@ uint8_t CSP_QSPI_Erase_Chip(void) {
     sConfig.Match = 0;
     sConfig.Mask = IS25LP064A_SR_WIP;
 
-    if (QSPI_AutoPollingMemReady(&sConfig, IS25LP064A_DIE_ERASE_MAX_TIME) != HAL_OK) {
+    if (QSPI_Wait(&sConfig, IS25LP064A_DIE_ERASE_MAX_TIME) != HAL_OK) {
         return HAL_ERROR;
     }
 
@@ -512,7 +512,7 @@ uint8_t CSP_QSPI_EraseSector(uint32_t EraseStartAddress, uint32_t EraseEndAddres
         }
         EraseStartAddress += IS25LP064A_SECTOR_SIZE;
 
-        if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
         }
     }
@@ -652,7 +652,7 @@ uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size) 
         }
 
         /* Configure automatic polling mode to wait for end of program */
-        if (QSPI_AutoPollingMemReady(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+        if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
             return HAL_ERROR;
         }
 
