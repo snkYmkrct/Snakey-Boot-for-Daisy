@@ -20,9 +20,8 @@ extern "C" {
 #define IS25LP064A_SECTOR_COUNT 2048
 
 
-#define IS25LP064A_DUMMY_CYCLES_READ_QUAD 8     /* & */
-#define IS25LP064A_DUMMY_CYCLES_READ 8          /* & */
-/* Not sure about these values, and DTR not used anyway */
+#define IS25LP064A_DUMMY_CYCLES_READ_QUAD 6     /* & */
+#define IS25LP064A_DUMMY_CYCLES_READ 6          /* & */
 //#define IS25LP064A_DUMMY_CYCLES_READ_DTR 6      /* & */
 //#define IS25LP064A_DUMMY_CYCLES_READ_QUAD_DTR 6 /* & */
 
@@ -62,7 +61,7 @@ extern "C" {
     /* Read Operations */
 #define READ_CMD 0x03 /* NORMAL READ (NORD) instruction */
 
-#define FAST_READ_CMD 0x0B /* FAST READ (FRD) instruction */
+#define FAST_READ_CMD 0x0B /* FAST READ (FRD) instruction for both 1 line and QPI modes */
 #define FAST_READ_DTR_CMD 0x0D /* FRDTR instruction */
 
 #define DUAL_OUT_FAST_READ_CMD 0x3B /* FAST READ DUAL OUTPUT OPERATION (FRDO) */
@@ -72,7 +71,7 @@ extern "C" {
 
 #define QUAD_OUT_FAST_READ_CMD 0x6B /* FAST READ QUAD OUTPUT OPERATION (FRQO) */
 
-#define QUAD_INOUT_FAST_READ_CMD 0xEB     /* FAST READ QUAD I/O OPERATION (FRQIO) */
+#define QUAD_INOUT_FAST_READ_CMD 0xEB     /* FAST READ QUAD I/O OPERATION (FRQIO) - can be used to enable memory mapped mode */
 #define QUAD_INOUT_FAST_READ_DTR_CMD 0xED /* FAST READ QUAD IO DTR MODE OPERATION (FRQDTR) */
 
     /* Write Operations */
