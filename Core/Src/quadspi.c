@@ -41,20 +41,6 @@ void MX_QUADSPI_Init(void)
 {
 
   /* USER CODE BEGIN QUADSPI_Init 0 */
-	/* Code added based on errata sheet ES0392 for the STM32H750xB chips
-	 * Section 2.8.4 QUADSPI internal timing criticality */
-	hqspi.Instance = QUADSPI;
-
-	WRITE_REG(hqspi.Instance->CR, 0);
-
-	while (READ_REG(hqspi.Instance->SR) & 0x20) {
-	}; // wait for BUSY flag to fall if not already lows
-	WRITE_REG(hqspi.Instance->CR, 0xFF000001); // set maximum prescaling factor, and enable the peripheral
-	WRITE_REG(hqspi.Instance->CCR, 0x20000000); // activate the free-running clock
-	WRITE_REG(hqspi.Instance->CCR, 0x20000000); // repeat the previous instruction to prevent a back-to-back disable
-	// The following command must complete less than 127 kernel clocks after the first write to the QSPI_CCR register
-	WRITE_REG(hqspi.Instance->CR, 0); // disable QSPI
-	while (READ_REG(hqspi.Instance->SR) & 0x20) {}; // wait for busy to fall
 
   /* USER CODE END QUADSPI_Init 0 */
 
@@ -177,12 +163,25 @@ void HAL_QSPI_MspDeInit(QSPI_HandleTypeDef* qspiHandle)
 /* QUADSPI init function */
 uint8_t CSP_QUADSPI_Init(void) {
 
-	hqspi.Instance = QUADSPI;
-    if (HAL_QSPI_DeInit(&hqspi) != HAL_OK) {
-        return HAL_ERROR;
-    }
+	/* Code added based on errata sheet ES0392 for the STM32H750xB chips
+	 * Section 2.8.4 QUADSPI internal timing criticality */
+    uint32_t cr = READ_REG(hqspi.Instance->CR);
+    uint32_t ccr = READ_REG(hqspi.Instance->CCR);
 
-    MX_QUADSPI_Init();
+	WRITE_REG(hqspi.Instance->CR, 0);
+
+	while (READ_REG(hqspi.Instance->SR) & 0x20) {
+	}; // wait for BUSY flag to fall if not already lows
+	WRITE_REG(hqspi.Instance->CR, 0xFF000001); // set maximum prescaling factor, and enable the peripheral
+	WRITE_REG(hqspi.Instance->CCR, 0x20000000); // activate the free-running clock
+	WRITE_REG(hqspi.Instance->CCR, 0x20000000); // repeat the previous instruction to prevent a back-to-back disable
+	// The following command must complete less than 127 kernel clocks after the first write to the QSPI_CCR register
+	WRITE_REG(hqspi.Instance->CR, 0); // disable QSPI
+	while (READ_REG(hqspi.Instance->SR) & 0x20) {}; // wait for busy to fall
+
+	WRITE_REG(hqspi.Instance->CR, cr);
+	WRITE_REG(hqspi.Instance->CCR, ccr);
+	/* ----------------------------------------------------------------- */
 
     if (QSPI_ResetChip() != HAL_OK) {
         return HAL_ERROR;
@@ -195,7 +194,6 @@ uint8_t CSP_QUADSPI_Init(void) {
     if (QSPI_Wait(&sConfig, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
-
 
     if (QSPI_Configuration() != HAL_OK) {
         return HAL_ERROR;
@@ -556,33 +554,19 @@ uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
 
 uint8_t CSP_QSPI_DisableMemoryMappedMode(void) {
 
-    QSPI_CommandTypeDef sCommand = {0};
-    QSPI_MemoryMappedTypeDef sMemMappedCfg = {0};
-
-    /* Disable Memory-Mapped mode
-		Same command as for enable, but with different alternate (mode) bits
-     */
-    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
-    sCommand.Instruction = QUAD_INOUT_FAST_READ_CMD;
-    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
-    sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
-    sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
-    sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
-    sCommand.DataMode = QSPI_DATA_4_LINES;
-    sCommand.NbData = 0;
-    sCommand.Address = 0;
-
-    sCommand.AlternateByteMode  = QSPI_ALTERNATE_BYTES_4_LINES;
-    sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
-    sCommand.AlternateBytes = 0x0;
-    sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
-    sCommand.SIOOMode = QSPI_SIOO_INST_ONLY_FIRST_CMD;
-
-    sMemMappedCfg.TimeOutActivation = QSPI_TIMEOUT_COUNTER_DISABLE;
-
-    if (HAL_QSPI_MemoryMapped(&hqspi, &sCommand, &sMemMappedCfg) != HAL_OK) {
+    // Need to first stop the host controller access to flash
+    if (HAL_QSPI_Abort(&hqspi)!= HAL_OK) {
         return HAL_ERROR;
     }
+
+    /* Reinit the flash ... TODO better method?
+     * Use the QUAD_INOUT_FAST_READ_CMD doesn't work properly
+     */
+    if (CSP_QUADSPI_Init() != HAL_OK)
+    {
+    	return HAL_ERROR;
+    }
+
     return HAL_OK;
 }
 

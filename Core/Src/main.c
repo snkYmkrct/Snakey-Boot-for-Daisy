@@ -65,6 +65,7 @@ uint8_t read_back[IS25LP064A_SECTOR_SIZE];
 char *writebuf = "Hello world from QSPI !";
 
 uint8_t readbuf[100] = {0};
+uint8_t readagain[100] = {0};
 
 int __io_putchar(int ch) {
 	HAL_UART_Transmit(&huart4, (uint8_t*)&ch, 1, HAL_MAX_DELAY);
@@ -126,9 +127,9 @@ int main(void)
   // flash controller hanging, unstable state, if the board was reset in the middle of
   // a flash command, like reset chip (which possibly lasts 45 seconds)
   // 1 second delay stops that from happening
-  //HAL_Delay (3000);
+  HAL_Delay (2000);
   fflush(stdout);
-  printf("  HIIIIII no delay ``````  \r\n");
+  printf("  ~~HIIIIII~~  \r\n");
 
   TEST_QSPI_ExitQPIMODE();
   printf("  after exit qpi \r\n");
@@ -150,7 +151,6 @@ int main(void)
   }
   printf("   erase successful !!!!!!!!!!!!!    \r\n");
 
-/*
 
   printf("Single write-read test \r\n buffer to write: %s   \r\n", writebuf);
   if (CSP_QSPI_EraseSector(0, IS25LP064A_SECTOR_SIZE-1) != HAL_OK) {
@@ -169,7 +169,7 @@ int main(void)
 	  Error_Handler();
   }
 
-  printf("read: ***%s***  pew pew \r\n", readbuf);
+  printf("read indirect mode: ***%s***  pew pew \r\n", readbuf);
   printf("and mew\r\n\r\n");
 
   if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
@@ -183,8 +183,20 @@ int main(void)
 	printf("-----> disable memory mapped mode error \r\n");
 	while (1);
   }
-*/
 
+  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK)
+  {
+	  printf("-----> why is this read  error ??? \r\n");
+	  Error_Handler();
+  }
+
+  printf("\r\n\r\nread after disable: ***%s***  pew pew \r\n", readagain);
+
+
+  printf("!!!!!!!!!!!!  made it!!!!!!  \r\n");
+
+
+  HAL_Delay (3000);
 
 /*  if (TEST_QSPI_ExitQPIMODE() != HAL_OK)
   {
@@ -193,7 +205,6 @@ int main(void)
   }
   printf("  and another exit qpi \r\n");
  */
-
 
     printf(" ~~~~~    starting write --- read test  \r\n");
 
@@ -257,6 +268,7 @@ int main(void)
 	printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
 
 
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -265,9 +277,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_Delay (900);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (200);   /* Insert delay */
+	  HAL_Delay (900);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
