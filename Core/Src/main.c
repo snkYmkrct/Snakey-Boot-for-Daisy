@@ -81,6 +81,117 @@ int __io_getchar(void) {
 	return ch;
 }
 
+void test_simple_readwrite(){
+
+	  printf("Single write-read test \r\n buffer to write: %s   \r\n", writebuf);
+	  if (CSP_QSPI_EraseSector(0, IS25LP064A_SECTOR_SIZE-1) != HAL_OK) {
+		printf("-----> erase sector error \r\n");
+		while (1);
+	  }
+	  if (CSP_QSPI_Write((uint8_t *)writebuf, 0, strlen (writebuf)) != HAL_OK)
+	  {
+		  while (1);
+	  }
+	  printf("   written!!!!!   \r\n");
+
+	  if (CSP_QSPI_Read(readbuf, 0, strlen (writebuf)) != HAL_OK)
+	  {
+		  printf("-----> read  error  \r\n");
+		  while (1);
+	  }
+
+	  printf("read indirect mode: ***%s***  pew pew \r\n", readbuf);
+	  printf("and mew\r\n\r\n");
+
+	  if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+		printf("-----> enable memory mapped mode error \r\n");
+		while (1);
+	  }
+	  memcpy(read_back, (uint8_t*) (0x90000000), strlen (writebuf));
+	  printf("read mapped mode: ***%s***  pew pew \r\n", read_back);
+
+	  if (CSP_QSPI_DisableMemoryMappedMode() != HAL_OK) {
+		printf("-----> disable memory mapped mode error \r\n");
+		while (1);
+	  }
+
+	  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK)
+	  {
+		  printf("-----> why is this read  error ??? \r\n");
+		  while (1);
+	  }
+
+	  printf("\r\n\r\nread after disable: ***%s***  pew pew \r\n", readagain);
+
+	  printf("!!!!!!!!!!!!  made it!!!!!!  \r\n");
+}
+
+void test_full_readwrite(){
+
+    printf(" ~~~~~    starting write --- read test  \r\n");
+
+	for (var = 0; var < IS25LP064A_SECTOR_SIZE; var++) {
+		buffer_test[var] = (var & 0xff);
+	}
+
+	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
+		if (CSP_QSPI_EraseSector(var * IS25LP064A_SECTOR_SIZE, (var + 1) * IS25LP064A_SECTOR_SIZE - 1) != HAL_OK) {
+			printf("-----> erase sector error  var = %lu \r\n", var);
+			while (1);
+		}
+		else {
+			printf("erased sector %lu  oooookay \r\n", var);
+		}
+		if (CSP_QSPI_Write(buffer_test, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+			printf("-----> write sector error  var = %lu \r\n", var);
+			while (1);
+		}
+		else {
+			printf("written sector %lu  oooookay \r\n", var);
+		}
+	}
+	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
+		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
+		if (CSP_QSPI_Read(read_back, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+			printf("-----> read sector error in non mapped mode var = %lu \r\n", var);
+			while (1);
+		}
+		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+			printf("-----> read sector wrong in non mapped mode  var = %lu \r\n", var);
+			while (1);
+		}
+		else {
+			printf("read   normal  sector %lu  oooookay  \r\n", var);
+		}
+	}
+
+	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+		printf("-----> enable memory mapped mode error \r\n");
+		while (1)
+			; //breakpoint - error detected
+	}
+
+	/* do not try to read last sector, it is read incorrectly in memory mapped mode
+	   problem described in errata sheet ES0392 for the STM32H750xB chips, section 2.8.5
+	*/
+	for (var = 0; var < IS25LP064A_SECTOR_COUNT-1; var++) {
+		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
+		memcpy(read_back, (uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE), IS25LP064A_SECTOR_SIZE);
+		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+			printf("-----> read sector wrong in mapped  var = %lu \r\n", var);
+			while (1)
+				;  //breakpoint - error detected - otherwise QSPI works properly
+		}
+		else {
+			printf("read  mapped  sector %lu  oooookay \r\n", var);
+		}
+	}
+
+	printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
+
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -127,9 +238,9 @@ int main(void)
   // flash controller hanging, unstable state, if the board was reset in the middle of
   // a flash command, like reset chip (which possibly lasts 45 seconds)
   // 1 second delay stops that from happening
-  HAL_Delay (2000);
+  //HAL_Delay (2000);
   fflush(stdout);
-  printf("  ~~HIIIIII~~  \r\n");
+  printf("  HIIIIII no delay cos whatever \r\n");
 
   TEST_QSPI_ExitQPIMODE();
   printf("  after exit qpi \r\n");
@@ -151,122 +262,11 @@ int main(void)
   }
   printf("   erase successful !!!!!!!!!!!!!    \r\n");
 
-
-  printf("Single write-read test \r\n buffer to write: %s   \r\n", writebuf);
-  if (CSP_QSPI_EraseSector(0, IS25LP064A_SECTOR_SIZE-1) != HAL_OK) {
-	printf("-----> erase sector error \r\n", var);
-	while (1);
-  }
-  if (CSP_QSPI_Write(writebuf, 0, strlen (writebuf)) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-  printf("   written!!!!!   \r\n");
-
-  if (CSP_QSPI_Read(readbuf, 0, strlen (writebuf)) != HAL_OK)
-  {
-	  printf("-----> read  error  \r\n");
-	  Error_Handler();
-  }
-
-  printf("read indirect mode: ***%s***  pew pew \r\n", readbuf);
-  printf("and mew\r\n\r\n");
-
-  if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
-	printf("-----> enable memory mapped mode error \r\n");
-	while (1);
-  }
-  memcpy(read_back, (uint8_t*) (0x90000000), strlen (writebuf));
-  printf("read mapped mode: ***%s***  pew pew \r\n", read_back);
-
-  if (CSP_QSPI_DisableMemoryMappedMode() != HAL_OK) {
-	printf("-----> disable memory mapped mode error \r\n");
-	while (1);
-  }
-
-  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK)
-  {
-	  printf("-----> why is this read  error ??? \r\n");
-	  Error_Handler();
-  }
-
-  printf("\r\n\r\nread after disable: ***%s***  pew pew \r\n", readagain);
-
-
-  printf("!!!!!!!!!!!!  made it!!!!!!  \r\n");
-
+  test_simple_readwrite();
 
   HAL_Delay (3000);
 
-/*  if (TEST_QSPI_ExitQPIMODE() != HAL_OK)
-  {
-	  printf("-----> exit quad spi  error  \r\n");
-	  Error_Handler();
-  }
-  printf("  and another exit qpi \r\n");
- */
-
-    printf(" ~~~~~    starting write --- read test  \r\n");
-
-	for (var = 0; var < IS25LP064A_SECTOR_SIZE; var++) {
-		buffer_test[var] = (var & 0xff);
-	}
-
-	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
-		if (CSP_QSPI_EraseSector(var * IS25LP064A_SECTOR_SIZE, (var + 1) * IS25LP064A_SECTOR_SIZE - 1) != HAL_OK) {
-			printf("-----> erase sector error  var = %d \r\n", var);
-
-			while (1)
-				;  //breakpoint - error detected
-		}
-		else {
-			printf("erased sector %d  oooookay \r\n", var);
-		}
-		if (CSP_QSPI_Write(buffer_test, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> write sector error  var = %d \r\n", var);
-			while (1)
-				;  //breakpoint - error detected
-		}
-		else {
-			printf("written sector %d  oooookay \r\n", var);
-		}
-	}
-	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
-		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
-		if (CSP_QSPI_Read(read_back, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector error in non mapped mode var = %d \r\n", var);
-			while (1);
-		}
-		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector wrong in non mapped mode  var = %d \r\n", var);
-			while (1)
-				;  //breakpoint - error detected - otherwise QSPI works properly
-		}
-		else {
-			printf("read sector %d  oooookay \r\n", var);
-		}
-	}
-
-	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
-		printf("-----> enable memory mapped mode error \r\n");
-		while (1)
-			; //breakpoint - error detected
-	}
-	for (var = 0; var < IS25LP064A_SECTOR_COUNT-1; var++) {
-		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
-		memcpy(read_back, (uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE), IS25LP064A_SECTOR_SIZE);
-		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector wrong in mapped  var = %d \r\n", var);
-			while (1)
-				;  //breakpoint - error detected - otherwise QSPI works properly
-		}
-		else {
-			printf("read sector %d  oooookay \r\n", var);
-		}
-	}
-
-	printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
-
+  test_full_readwrite();
 
 
   /* USER CODE END 2 */
@@ -277,9 +277,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (900);   /* Insert delay */
+	  HAL_Delay (2000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (900);   /* Insert delay */
+	  HAL_Delay (2000);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
