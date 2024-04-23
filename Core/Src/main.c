@@ -153,11 +153,11 @@ void test_full_readwrite(){
 	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
 		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
 		if (CSP_QSPI_Read(read_back, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector error in non mapped mode var = %lu \r\n", var);
+			printf("-----> read sector error in indirect mode var = %lu \r\n", var);
 			while (1);
 		}
 		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector wrong in non mapped mode  var = %lu \r\n", var);
+			printf("-----> read sector wrong in indirect mode  var = %lu \r\n", var);
 			while (1);
 		}
 		else {
@@ -179,6 +179,8 @@ void test_full_readwrite(){
 		memcpy(read_back, (uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE), IS25LP064A_SECTOR_SIZE);
 		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
 			printf("-----> read sector wrong in mapped  var = %lu \r\n", var);
+			printf(" %u %u %u %u %u %u %u %u %u %u \r\n", read_back[0], read_back[1], read_back[2], read_back[3],
+					read_back[4], read_back[5], read_back[6], read_back[7], read_back[8], read_back[9]);
 			while (1)
 				;  //breakpoint - error detected - otherwise QSPI works properly
 		}
@@ -240,10 +242,10 @@ int main(void)
   // 1 second delay stops that from happening
   //HAL_Delay (2000);
   fflush(stdout);
-  printf("  HIIIIII no delay cos whatever \r\n");
+  printf("  HIIIIII ^^^^^ \r\n");
 
   TEST_QSPI_ExitQPIMODE();
-  printf("  after exit qpi \r\n");
+  //printf("  after exit qpi \r\n");
 
   if (CSP_QUADSPI_Init() != HAL_OK)
   {

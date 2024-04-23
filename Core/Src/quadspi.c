@@ -165,7 +165,7 @@ uint8_t CSP_QUADSPI_Init(void) {
 
 	/* Code added based on errata sheet ES0392 for the STM32H750xB chips
 	 * Section 2.8.4 QUADSPI internal timing criticality */
-    uint32_t cr = READ_REG(hqspi.Instance->CR);
+/*    uint32_t cr = READ_REG(hqspi.Instance->CR);
     uint32_t ccr = READ_REG(hqspi.Instance->CCR);
 
 	WRITE_REG(hqspi.Instance->CR, 0);
@@ -180,7 +180,7 @@ uint8_t CSP_QUADSPI_Init(void) {
 	while (READ_REG(hqspi.Instance->SR) & 0x20) {}; // wait for busy to fall
 
 	WRITE_REG(hqspi.Instance->CR, cr);
-	WRITE_REG(hqspi.Instance->CCR, ccr);
+	WRITE_REG(hqspi.Instance->CCR, ccr);*/
 	/* ----------------------------------------------------------------- */
 
     if (QSPI_ResetChip() != HAL_OK) {
@@ -243,8 +243,42 @@ uint8_t QSPI_ReadStatusRegister(uint8_t *status) {
 uint8_t QSPI_ResetChip() {
     QSPI_CommandTypeDef sCommand = {0};
 
-    /* Erasing Sequence -------------------------------------------------- */
     sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
+    sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+    sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
+    sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+    sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+    sCommand.Instruction = RESET_ENABLE_CMD;
+    sCommand.AddressMode = QSPI_ADDRESS_NONE;
+    sCommand.Address = 0;
+    sCommand.DataMode = QSPI_DATA_NONE;
+    sCommand.DummyCycles = 0;
+
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) == HAL_OK) {
+
+        sCommand.Instruction = RESET_MEMORY_CMD;
+
+        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) == HAL_OK) {
+            return HAL_OK;
+        }
+    }
+
+    sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+    sCommand.Instruction = RESET_ENABLE_CMD;
+
+    if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) == HAL_OK) {
+
+        sCommand.Instruction = RESET_MEMORY_CMD;
+
+        if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) == HAL_OK) {
+            return HAL_OK;
+        }
+    }
+
+    return HAL_ERROR;
+
+/*    sCommand.InstructionMode = QSPI_INSTRUCTION_1_LINE;
     sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
     sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
     sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
@@ -275,7 +309,7 @@ uint8_t QSPI_ResetChip() {
     if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
         return HAL_ERROR;
     }
-    return HAL_OK;
+    return HAL_OK;*/
 }
 
 uint8_t QSPI_Wait(const QSPI_AutoPollingTypeDef *config, uint32_t timeout) {
