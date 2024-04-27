@@ -114,6 +114,7 @@ void test_simple_readwrite(){
 		printf("-----> disable memory mapped mode error \r\n");
 		while (1);
 	  }
+	  //HAL_Delay (1);
 
 	  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK)
 	  {
@@ -266,7 +267,7 @@ int main(void)
 
   test_simple_readwrite();
 
-  HAL_Delay (3000);
+  HAL_Delay (10000);
 
   test_full_readwrite();
 

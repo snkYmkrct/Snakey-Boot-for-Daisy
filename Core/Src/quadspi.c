@@ -44,14 +44,13 @@ void MX_QUADSPI_Init(void)
 
   /* USER CODE END QUADSPI_Init 0 */
 
-
   /* USER CODE BEGIN QUADSPI_Init 1 */
 
   /* USER CODE END QUADSPI_Init 1 */
   hqspi.Instance = QUADSPI;
   hqspi.Init.ClockPrescaler = 1;
   hqspi.Init.FifoThreshold = 1;
-  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_NONE;
+  hqspi.Init.SampleShifting = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
   hqspi.Init.FlashSize = 22;
   hqspi.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_2_CYCLE;
   hqspi.Init.ClockMode = QSPI_CLOCK_MODE_0;
@@ -588,13 +587,35 @@ uint8_t CSP_QSPI_EnableMemoryMappedMode(void) {
 
 uint8_t CSP_QSPI_DisableMemoryMappedMode(void) {
 
+	 QSPI_CommandTypeDef sCommand = {0};
+
     // Need to first stop the host controller access to flash
     if (HAL_QSPI_Abort(&hqspi)!= HAL_OK) {
         return HAL_ERROR;
     }
 
+	sCommand.InstructionMode = QSPI_INSTRUCTION_4_LINES;
+	sCommand.Instruction = QUAD_INOUT_FAST_READ_CMD;
+	sCommand.AddressSize = QSPI_ADDRESS_24_BITS;
+	sCommand.AddressMode = QSPI_ADDRESS_4_LINES;
+	sCommand.DdrMode = QSPI_DDR_MODE_DISABLE;
+	sCommand.DdrHoldHalfCycle = QSPI_DDR_HHC_ANALOG_DELAY;
+	sCommand.DataMode = QSPI_DATA_4_LINES;
+	sCommand.NbData = 0;
+	sCommand.Address = 0;
+
+	sCommand.AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
+	sCommand.AlternateBytesSize = QSPI_ALTERNATE_BYTES_8_BITS;
+	sCommand.AlternateBytes = 0x00000000;
+	sCommand.DummyCycles = IS25LP064A_DUMMY_CYCLES_READ_QUAD;
+	sCommand.SIOOMode = QSPI_SIOO_INST_EVERY_CMD;
+
+	if (HAL_QSPI_Command(&hqspi, &sCommand, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK) {
+		return HAL_ERROR;
+	}
+
     /* Reinit the flash ... TODO better method?
-     * Use the QUAD_INOUT_FAST_READ_CMD doesn't work properly
+     * Use the QUAD_INOUT_FAST_READ_CMD doesn't work completely
      */
     if (CSP_QUADSPI_Init() != HAL_OK)
     {
