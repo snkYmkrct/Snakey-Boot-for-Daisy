@@ -59,10 +59,10 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 static uint8_t buffer_test[IS25LP064A_SECTOR_SIZE];
-static uint32_t var = 0;
 uint8_t read_back[IS25LP064A_SECTOR_SIZE];
 
 char *writebuf = "Hello world from QSPI !";
+extern char *initerrorbuf;
 
 uint8_t readbuf[100] = {0};
 uint8_t readagain[100] = {0};
@@ -88,14 +88,12 @@ void test_simple_readwrite(){
 		printf("-----> erase sector error \r\n");
 		while (1);
 	  }
-	  if (CSP_QSPI_Write((uint8_t *)writebuf, 0, strlen (writebuf)) != HAL_OK)
-	  {
+	  if (CSP_QSPI_Write((uint8_t *)writebuf, 0, strlen (writebuf)) != HAL_OK) {
 		  while (1);
 	  }
 	  printf("   written!!!!!   \r\n");
 
-	  if (CSP_QSPI_Read(readbuf, 0, strlen (writebuf)) != HAL_OK)
-	  {
+	  if (CSP_QSPI_Read(readbuf, 0, strlen (writebuf)) != HAL_OK) {
 		  printf("-----> read  error  \r\n");
 		  while (1);
 	  }
@@ -107,6 +105,7 @@ void test_simple_readwrite(){
 		printf("-----> enable memory mapped mode error \r\n");
 		while (1);
 	  }
+
 	  memcpy(read_back, (uint8_t*) (0x90000000), strlen (writebuf));
 	  printf("read mapped mode: ***%s***  pew pew \r\n", read_back);
 
@@ -114,10 +113,8 @@ void test_simple_readwrite(){
 		printf("-----> disable memory mapped mode error \r\n");
 		while (1);
 	  }
-	  //HAL_Delay (1);
 
-	  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK)
-	  {
+	  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK) {
 		  printf("-----> why is this read  error ??? \r\n");
 		  while (1);
 	  }
@@ -127,9 +124,10 @@ void test_simple_readwrite(){
 	  printf("!!!!!!!!!!!!  made it!!!!!!  \r\n");
 }
 
-void test_full_readwrite(){
+void test_full_readwrite(uint32_t loops) {
+	uint32_t var = 0, l = 0;
 
-    printf(" ~~~~~    starting write --- read test  \r\n");
+	printf(" ~~~~~    starting write --- read test  \r\n");
 
 	for (var = 0; var < IS25LP064A_SECTOR_SIZE; var++) {
 		buffer_test[var] = (var & 0xff);
@@ -151,43 +149,55 @@ void test_full_readwrite(){
 			printf("written sector %lu  oooookay \r\n", var);
 		}
 	}
-	for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
-		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
-		if (CSP_QSPI_Read(read_back, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector error in indirect mode var = %lu \r\n", var);
+
+	for (l = 0; l < loops; l++) {
+		printf("*****************   starting read loop %lu  \r\n", l);
+
+		for (var = 0; var < IS25LP064A_SECTOR_COUNT; var++) {
+			memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
+			if (CSP_QSPI_Read(read_back, var * IS25LP064A_SECTOR_SIZE, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+				printf(	"-----> read sector error in indirect mode loop = %lu var = %lu \r\n", l, var);
+				while (1)
+					;
+			}
+			if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+				printf(	"-----> read sector wrong in indirect mode loop = %lu  var = %lu \r\n", l, var);
+				while (1);
+			}
+			else {
+				printf("read   normal  sector: loop = %lu  %lu  oooookay  \r\n", l, var);
+			}
+		}
+
+		if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+			printf("-----> enable memory mapped mode error loop = %lu \r\n", l);
 			while (1);
 		}
-		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector wrong in indirect mode  var = %lu \r\n", var);
+
+		/* do not try to read last sector, it is read incorrectly in memory mapped mode
+		 problem described in errata sheet ES0392 for the STM32H750xB chips, section 2.8.5
+		 */
+		for (var = 0; var < IS25LP064A_SECTOR_COUNT - 1; var++) {
+			memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
+			memcpy(read_back,(uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE), IS25LP064A_SECTOR_SIZE);
+			if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
+				printf("-----> read sector wrong in mapped  loop = %lu var = %lu \r\n", l, var);
+				printf(" %u %u %u %u %u %u %u %u %u %u \r\n", read_back[0],
+						read_back[1], read_back[2], read_back[3], read_back[4],
+						read_back[5], read_back[6], read_back[7], read_back[8],
+						read_back[9]);
+				while (1) ;
+			}
+			else {
+				printf("read  mapped  sector loop = %lu %lu  oooookay \r\n", l, var);
+			}
+		}
+
+		if (CSP_QSPI_DisableMemoryMappedMode() != HAL_OK) {
+			printf("-----> disable memory mapped mode error in loop = %lu \r\n", l);
 			while (1);
 		}
-		else {
-			printf("read   normal  sector %lu  oooookay  \r\n", var);
-		}
-	}
 
-	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
-		printf("-----> enable memory mapped mode error \r\n");
-		while (1)
-			; //breakpoint - error detected
-	}
-
-	/* do not try to read last sector, it is read incorrectly in memory mapped mode
-	   problem described in errata sheet ES0392 for the STM32H750xB chips, section 2.8.5
-	*/
-	for (var = 0; var < IS25LP064A_SECTOR_COUNT-1; var++) {
-		memset(read_back, 0, IS25LP064A_SECTOR_SIZE);
-		memcpy(read_back, (uint8_t*) (0x90000000 + var * IS25LP064A_SECTOR_SIZE), IS25LP064A_SECTOR_SIZE);
-		if (memcmp(buffer_test, read_back, IS25LP064A_SECTOR_SIZE) != HAL_OK) {
-			printf("-----> read sector wrong in mapped  var = %lu \r\n", var);
-			printf(" %u %u %u %u %u %u %u %u %u %u \r\n", read_back[0], read_back[1], read_back[2], read_back[3],
-					read_back[4], read_back[5], read_back[6], read_back[7], read_back[8], read_back[9]);
-			while (1)
-				;  //breakpoint - error detected - otherwise QSPI works properly
-		}
-		else {
-			printf("read  mapped  sector %lu  oooookay \r\n", var);
-		}
 	}
 
 	printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
@@ -236,40 +246,36 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
-  // When flashing code over STLink, the code starts running before flashing is done,
-  // and the STLink resets the board in the middle of configuration calls, leaving the
-  // flash controller hanging, unstable state, if the board was reset in the middle of
-  // a flash command, like reset chip (which possibly lasts 45 seconds)
-  // 1 second delay stops that from happening
-  //HAL_Delay (2000);
   fflush(stdout);
   printf("  HIIIIII ^^^^^ \r\n");
 
-  TEST_QSPI_ExitQPIMODE();
-  //printf("  after exit qpi \r\n");
+  if (TEST_QSPI_ExitQPIMODE() != HAL_OK){
+	  printf(" \r\n  ======>   dam exit qpi error --- never happens ???? O.o  \r\n");
+  }
+  printf("  after exit qpi \r\n \r\n");
 
-  if (CSP_QUADSPI_Init() != HAL_OK)
-  {
+  if (CSP_QUADSPI_Init() != HAL_OK) {
 	  printf("-----> quad spi init error  \r\n");
+	  printf("error buff:  %s  \r\n", initerrorbuf);
 	  Error_Handler();
   }
 
 
-  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+/*  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
   printf("   LED ON before erase   \r\n");
-  HAL_Delay (1);
 
   if (CSP_QSPI_Erase_Chip() != HAL_OK)
   {
 	  Error_Handler();
   }
-  printf("   erase successful !!!!!!!!!!!!!    \r\n");
+  printf("   erase successful !!!!!!!!!!!!!    \r\n");*/
+
 
   test_simple_readwrite();
 
-  HAL_Delay (10000);
+  HAL_Delay (5000);
 
-  test_full_readwrite();
+  //test_full_readwrite(20);
 
 
   /* USER CODE END 2 */
