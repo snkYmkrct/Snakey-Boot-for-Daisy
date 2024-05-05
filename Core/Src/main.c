@@ -246,13 +246,9 @@ int main(void)
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
+  //HAL_Delay (4000);
   fflush(stdout);
-  printf("  HIIIIII ^^^^^ \r\n");
-
-  if (TEST_QSPI_ExitQPIMODE() != HAL_OK){
-	  printf(" \r\n  ======>   dam exit qpi error --- never happens ???? O.o  \r\n");
-  }
-  printf("  after exit qpi \r\n \r\n");
+  printf("   HII ^^^^^ \r\n");
 
   if (CSP_QUADSPI_Init() != HAL_OK) {
 	  printf("-----> quad spi init error  \r\n");
@@ -260,22 +256,25 @@ int main(void)
 	  Error_Handler();
   }
 
-
-/*  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
   printf("   LED ON before erase   \r\n");
 
   if (CSP_QSPI_Erase_Chip() != HAL_OK)
   {
 	  Error_Handler();
   }
-  printf("   erase successful !!!!!!!!!!!!!    \r\n");*/
-
+  printf("   erase successful !!!!!!!!!!!!!    \r\n");
 
   test_simple_readwrite();
 
   HAL_Delay (5000);
 
-  //test_full_readwrite(20);
+  test_full_readwrite(2);
+
+  if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
+	  printf(" \r\n  ======> exit qpi error \r\n");
+  }
+  printf(" success after exit qpi \r\n \r\n");
 
 
   /* USER CODE END 2 */
@@ -286,9 +285,9 @@ int main(void)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (2000);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (2000);   /* Insert delay */
+	  HAL_Delay (1000);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

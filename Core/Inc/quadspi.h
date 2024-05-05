@@ -44,7 +44,7 @@ uint8_t CSP_QSPI_DisableMemoryMappedMode(void);
 uint8_t CSP_QSPI_Write(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
 uint8_t CSP_QSPI_Read(uint8_t* buffer, uint32_t address, uint32_t buffer_size);
 //---------------------------------------------
-uint8_t TEST_QSPI_ExitQPIMODE();
+uint8_t CSP_QSPI_ExitQPIMODE();
 
 /* USER CODE END Private defines */
 
