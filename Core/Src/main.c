@@ -81,6 +81,62 @@ int __io_getchar(void) {
 	return ch;
 }
 
+#if defined(__GNUC__)
+extern uint32_t _qspi_init_base;
+extern uint32_t _qspi_init_length;
+static void __attribute__((section(".qspi"), noinline)) GpioToggle(void) {
+    uint32_t index = 0;
+    while (index++ < 5) {
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+        /* Insert delay 1000 ms */
+        HAL_Delay(1000);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+
+        /* Insert delay 1000 ms */
+        HAL_Delay(1000);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+        /* Insert delay 1000 ms */
+        HAL_Delay(1000);
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+        /* Insert delay 1000 ms */
+        HAL_Delay(1000);
+    }
+}
+#endif
+
+void test_execute_qspi_code() {
+    uint8_t *flash_addr = 0;
+    uint32_t max_size = 0;
+#if defined(__GNUC__)
+    flash_addr = (uint8_t*) (&_qspi_init_base);
+    max_size = (uint32_t) ((uint8_t*) (&_qspi_init_length));
+#endif
+
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        printf(" \r\n  ======> exit qpi error \r\n");
+    }
+    printf(" exit qpi in execute from flash test \r\n \r\n");
+
+    if (CSP_QSPI_EraseSector(0, max_size) != HAL_OK) {
+        printf("-----> erase sector error in execute from flash test \r\n");
+        while (1);
+    }
+
+    if (CSP_QSPI_Write(flash_addr, 0, max_size) != HAL_OK) {
+    	printf("-----> write error in execute from flash test\r\n");
+        while (1);
+    }
+
+    if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+        printf("-----> enable memory mapped mode error in execute from flash test \r\n");
+        while (1);
+    }
+
+    printf(" flash pointer %p size %lu \r\n", flash_addr, max_size);
+    /* Execute the code from QSPI memory ------------------------------- */
+    GpioToggle();
+}
+
 void test_simple_readwrite(){
 
 	  printf("Single write-read test \r\n buffer to write: %s  \r\n", writebuf);
@@ -262,18 +318,22 @@ int main(void)
   printf("   erase successful !!!!!   LED off   \r\n");
   HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
 
+  test_execute_qspi_code();
+/*
 
   test_simple_readwrite();
 
   HAL_Delay (10000);
 
   test_full_readwrite(10);
+*/
 
-  if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
+/*  if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
 	  printf(" \r\n  ======> exit qpi error \r\n");
   }
   printf(" success after exit qpi \r\n \r\n");
-  printf("  ~~~  LET THE LED BLINKING BEGIN  ~~~  \r\n \r\n");
+  printf("  ~~~  LET THE LED BLINKING BEGIN  ~~~  \r\n \r\n");*/
+
 
   /* USER CODE END 2 */
 
@@ -282,10 +342,10 @@ int main(void)
   while (1)
   {
 	  //HAL_GPIO_TogglePin (GPIOC, GPIO_PIN_7); GPIO_PIN_RESET
-	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-	  HAL_Delay (2000);   /* Insert delay */
+/*	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+	  HAL_Delay (2000);
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_Delay (1000);  */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

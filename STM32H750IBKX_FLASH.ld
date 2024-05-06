@@ -49,6 +49,7 @@ MEMORY
   RAM_D2 (xrw)   : ORIGIN = 0x30000000, LENGTH = 288K
   RAM_D3 (xrw)   : ORIGIN = 0x38000000, LENGTH = 64K
   ITCMRAM (xrw)  : ORIGIN = 0x00000000, LENGTH = 64K
+  QSPI (rx)      : ORIGIN = 0x90000000, LENGTH = 1024K
 }
 
 /* Define output sections */
@@ -94,7 +95,21 @@ SECTIONS
     *(.ARM.exidx*)
     __exidx_end = .;
   } >FLASH
-
+  
+  _qspi_init_base = LOADADDR(.qspi);
+  _qspi_init_length = SIZEOF(.qspi);
+  
+ .qspi :
+  {
+    . = ALIGN(4);
+    _qspi_start = .;        /* create a global symbol at qspi start */
+    *(.qspi)         /* .qspi sections */
+    *(.qspi*)        /* .qspi* sections */
+    . = ALIGN(4);
+    _qspi_end = .;         /* define a global symbols at end of qspi */
+    
+  } >QSPI AT> FLASH
+  
   .preinit_array     :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
