@@ -243,7 +243,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   fflush(stdout);
-  printf("   -@-@-@-  HII  -@-@-@- \r\n");
+  printf("   -@-@-@-  Load and Boot  -@-@-@- \r\n");
 
   if (CSP_QUADSPI_Init() != HAL_OK) {
 	  printf("-----> quad spi init error  \r\n");
