@@ -52,6 +52,10 @@ void MX_QUADSPI_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
+#define MEMORY_FLASH_SIZE               0x800000 /* 8  MBytes*/
+#define MEMORY_SECTOR_SIZE              0x1000  /* 4  KBytes */
+#define MEMORY_PAGE_SIZE                0x100   /* 256 bytes */
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
