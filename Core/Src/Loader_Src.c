@@ -42,6 +42,8 @@ int Init(void) {
     __HAL_RCC_QSPI_FORCE_RESET();  //completely reset peripheral
     __HAL_RCC_QSPI_RELEASE_RESET();
 
+    MX_QUADSPI_Init();
+
     if (CSP_QUADSPI_Init() != HAL_OK) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
@@ -73,7 +75,7 @@ int Write(uint32_t Address, uint32_t Size, uint8_t* buffer) {
 
     __set_PRIMASK(0); //enable interrupts
 
-    if (HAL_QSPI_Abort(&hqspi) != HAL_OK) {
+    if (CSP_QSPI_DisableMemoryMappedMode()!= HAL_OK) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
@@ -83,6 +85,11 @@ int Write(uint32_t Address, uint32_t Size, uint8_t* buffer) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
+
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        __set_PRIMASK(1); // disable interrupts
+        return LOADER_FAIL;
+      }
 
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;
@@ -99,7 +106,7 @@ int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
 
     __set_PRIMASK(0); //enable interrupts
 
-    if (HAL_QSPI_Abort(&hqspi) != HAL_OK) {
+    if (CSP_QSPI_DisableMemoryMappedMode() != HAL_OK) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
@@ -109,6 +116,11 @@ int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
+
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        __set_PRIMASK(1); // disable interrupts
+        return LOADER_FAIL;
+      }
 
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;
@@ -128,7 +140,7 @@ int MassErase(void) {
 
     __set_PRIMASK(0); //enable interrupts
 
-    if (HAL_QSPI_Abort(&hqspi) != HAL_OK) {
+    if (CSP_QSPI_DisableMemoryMappedMode()!= HAL_OK) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
@@ -138,6 +150,11 @@ int MassErase(void) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
+
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        __set_PRIMASK(1); // disable interrupts
+        return LOADER_FAIL;
+      }
 
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;

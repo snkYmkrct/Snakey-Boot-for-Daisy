@@ -563,7 +563,7 @@ uint8_t CSP_QSPI_DisableMemoryMappedMode(void) {
     }
 
     //invalidate and clear the host cache
-    SCB_CleanInvalidateDCache();
+    //SCB_CleanInvalidateDCache();
 
     return HAL_OK;
 }

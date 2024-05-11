@@ -251,7 +251,7 @@ int main(void)
 	  Error_Handler();
   }
 
-
+/*
   HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
   printf("   LED ON before erase   \r\n");
 
@@ -261,13 +261,14 @@ int main(void)
   }
   printf("   erase successful !!!!!   LED off   \r\n");
   HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+*/
 
 
   test_simple_readwrite();
 
   HAL_Delay (10000);
 
-  test_full_readwrite(10);
+  //test_full_readwrite(10);
 
   if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
 	  printf(" \r\n  ======> exit qpi error \r\n");
@@ -285,7 +286,7 @@ int main(void)
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
 	  HAL_Delay (2000);   /* Insert delay */
 	  HAL_GPIO_WritePin (GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-	  HAL_Delay (1000);   /* Insert delay */
+	  HAL_Delay (500);   /* Insert delay */
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -33,7 +33,7 @@ MEMORY
 /* Define output sections */
 SECTIONS
 {
-  /* The startup code goes first into FLASH */
+  /* The startup code goes first into RAM_D1 */
   .isr_vector :
   {
   	. = . + 0x1FC;
@@ -92,7 +92,7 @@ SECTIONS
   . = ALIGN(4);
   .bss :
   {
-    /* This is used by the startup in order to initialize the .bss secion */
+    /* This is used by the startup in order to initialize the .bss section */
     _sbss = .;         /* define a global symbol at bss start */
     __bss_start__ = _sbss;
     *(.bss)
@@ -104,7 +104,7 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM_D1 :Loader
 
-  /* The program code and other data goes into FLASH */
+  /* The program code and other data goes into RAM_D1 */
   .text :
   {
     . = ALIGN(4);
@@ -113,7 +113,9 @@ SECTIONS
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
     *(.eh_frame)
-
+    *(.RamFunc)   /* RamFunc section */
+    *(.RamFunc*)  /* RamFunc* section */
+ 
     KEEP (*(.init))
     KEEP (*(.fini))
 
@@ -127,7 +129,7 @@ SECTIONS
   } :SgInfo
   
   
-  /* Constant data goes into FLASH */
+  /* Constant data goes into RAM_D1 */
   .rodata :
   {
     . = ALIGN(4);
@@ -147,6 +149,14 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(4);
   } >RAM_D1 :Loader
+  
+  /* Remove information from the standard libraries */
+  /DISCARD/ :
+  {
+    libc.a ( * )
+    libm.a ( * )
+    libgcc.a ( * )
+  }
 
   .ARM.attributes 0 : { *(.ARM.attributes) }
 }
