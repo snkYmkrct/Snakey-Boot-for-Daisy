@@ -267,6 +267,11 @@ uint64_t Verify(uint32_t MemoryAddr, uint32_t RAMBufferAddr, uint32_t Size, uint
         VerifiedData++;
     }
 
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        __set_PRIMASK(1); // disable interrupts
+        return LOADER_FAIL;
+      }
+
     __set_PRIMASK(1); //disable interrupts
     return (checksum << 32);
 }
