@@ -44,6 +44,16 @@ int Init(void) {
 
     MX_QUADSPI_Init();
 
+    if (CSP_QSPI_DisableMemoryMappedMode() != HAL_OK) {
+        __set_PRIMASK(1); //disable interrupts
+        return LOADER_FAIL;
+    }
+
+    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
+        __set_PRIMASK(1); //disable interrupts
+        return LOADER_FAIL;
+    }
+
     if (CSP_QUADSPI_Init() != HAL_OK) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
@@ -86,11 +96,6 @@ int Write(uint32_t Address, uint32_t Size, uint8_t* buffer) {
         return LOADER_FAIL;
     }
 
-    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
-        __set_PRIMASK(1); // disable interrupts
-        return LOADER_FAIL;
-      }
-
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;
 }
@@ -116,11 +121,6 @@ int SectorErase(uint32_t EraseStartAddress, uint32_t EraseEndAddress) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
-
-    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
-        __set_PRIMASK(1); // disable interrupts
-        return LOADER_FAIL;
-      }
 
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;
@@ -150,11 +150,6 @@ int MassErase(void) {
         __set_PRIMASK(1); //disable interrupts
         return LOADER_FAIL;
     }
-
-    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
-        __set_PRIMASK(1); // disable interrupts
-        return LOADER_FAIL;
-      }
 
     __set_PRIMASK(1); //disable interrupts
     return LOADER_OK;
@@ -266,11 +261,6 @@ uint64_t Verify(uint32_t MemoryAddr, uint32_t RAMBufferAddr, uint32_t Size, uint
         }
         VerifiedData++;
     }
-
-    if (CSP_QSPI_ExitQPIMODE() != HAL_OK) {
-        __set_PRIMASK(1); // disable interrupts
-        return LOADER_FAIL;
-      }
 
     __set_PRIMASK(1); //disable interrupts
     return (checksum << 32);

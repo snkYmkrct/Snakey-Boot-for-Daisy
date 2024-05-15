@@ -27,7 +27,7 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
-	RAM_D1 (xrw)      : ORIGIN = 0x24000004, LENGTH = 512K
+	RAM_D1 (xrw)      : ORIGIN = 0x24000004, LENGTH = 512K - 4
 }								
 
 /* Define output sections */
@@ -113,8 +113,6 @@ SECTIONS
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
     *(.eh_frame)
-    *(.RamFunc)   /* RamFunc section */
-    *(.RamFunc*)  /* RamFunc* section */
  
     KEEP (*(.init))
     KEEP (*(.fini))
@@ -142,12 +140,12 @@ SECTIONS
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
   {
-    . = ALIGN(4);
+    . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
-    . = ALIGN(4);
+    . = ALIGN(8);
   } >RAM_D1 :Loader
   
   /* Remove information from the standard libraries */
