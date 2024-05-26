@@ -20,16 +20,10 @@ int Init(void) {
     SystemInit();
 
     /* ADAPTATION TO THE DEVICE
-     *
-     * change VTOR setting for H7 device
-     * SCB->VTOR = 0x24000000 | 0x200;
-     *
-     * change VTOR setting for other devices
-     * SCB->VTOR = 0x20000000 | 0x200;
-     *
+     * VTOR setting for H7 device
      * */
 
-    SCB->VTOR = 0x24000000 | 0x200;
+    SCB->VTOR = 0x24000000 | 0x400;
 
     __set_PRIMASK(0); //enable interrupts
 
