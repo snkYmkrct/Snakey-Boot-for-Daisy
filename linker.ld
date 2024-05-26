@@ -36,7 +36,7 @@ SECTIONS
   /* The startup code goes first into RAM_D1 */
   .isr_vector :
   {
-  	. = . + 0x1FC;
+  	. = . + 0x3FC;
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
