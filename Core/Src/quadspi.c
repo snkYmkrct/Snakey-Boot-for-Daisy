@@ -562,7 +562,8 @@ uint8_t CSP_QSPI_DisableMemoryMappedMode(void) {
         return HAL_ERROR;
     }
 
-    //invalidate and clear the host cache
+    // invalidate and clear the host cache needed after exiting memory mapped
+    // do not enable it here, use it in test application
     //SCB_CleanInvalidateDCache();
 
     return HAL_OK;

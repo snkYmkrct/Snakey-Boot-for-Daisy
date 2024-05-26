@@ -36,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define APP_START_ADDRESS 0x90000000u
 
 /* USER CODE END PD */
 
@@ -112,6 +113,8 @@ void test_simple_readwrite(){
 		printf("-----> disable memory mapped mode error \r\n");
 		while (1);
 	  }
+	  //invalidate and clear the host cache needed after exiting memory mapped
+	  SCB_CleanInvalidateDCache();
 
 	  if (CSP_QSPI_Read(readagain, 0, strlen (writebuf)) != HAL_OK) {
 		  printf("-----> read  error \r\n");
@@ -196,8 +199,30 @@ void test_full_readwrite(uint32_t loops) {
 			printf("-----> disable memory mapped mode error in loop = %lu \r\n", l);
 			while (1);
 		}
+	    //invalidate and clear the host cache needed after exiting memory mapped
+	    SCB_CleanInvalidateDCache();
 	}
 	printf(" ~!~!~!~!~    SUCCESS write --- read test  \r\n");
+}
+
+void test_qpi_running_app(){
+
+	if (CSP_QSPI_EnableMemoryMappedMode() != HAL_OK) {
+	      Error_Handler();
+	  }
+
+	  SCB_DisableDCache();
+	  SCB_DisableICache();
+
+	  SysTick->CTRL = 0x0; //Disables SysTick timer and its related interrupt
+
+	  /* We are now ready to jump to the qspi app */
+	  uint32_t qspi_app_start = *((volatile uint32_t*) (APP_START_ADDRESS + 4));
+	  void (*qspi_reset_handler)(void) = (void*)qspi_app_start;
+	  __set_MSP(*((volatile uint32_t*) APP_START_ADDRESS)); //Set the MSP
+
+
+	  qspi_reset_handler(); //We start the execution from he Reset_Handler of the qspi app
 }
 
 
@@ -241,6 +266,8 @@ int main(void)
   MX_QUADSPI_Init();
   MX_UART4_Init();
   /* USER CODE BEGIN 2 */
+  CSP_QSPI_DisableMemoryMappedMode();
+  CSP_QSPI_ExitQPIMODE();
 
   fflush(stdout);
   printf("   -@-@-@-  Load and Boot  -@-@-@- \r\n");
@@ -264,17 +291,21 @@ int main(void)
 */
 
 
-  test_simple_readwrite();
+  //test_simple_readwrite();
 
-  HAL_Delay (10000);
+  //HAL_Delay (10000);
 
   //test_full_readwrite(10);
 
-  if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
+  // testing external flash running app -- never reaches main in this app anymore
+  test_qpi_running_app();
+
+/*  if (CSP_QSPI_ExitQPIMODE() != HAL_OK){
 	  printf(" \r\n  ======> exit qpi error \r\n");
   }
-  printf(" success after exit qpi \r\n \r\n");
-  printf("  ~~~  LET THE LED BLINKING BEGIN  ~~~  \r\n \r\n");
+  printf(" success after exit qpi \r\n \r\n");*/
+
+  //printf("  ~~~  LET THE LED BLINKING BEGIN  ~~~  \r\n \r\n");
 
   /* USER CODE END 2 */
 
