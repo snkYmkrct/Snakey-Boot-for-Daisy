@@ -13,4 +13,4 @@ Snakey_Boot Debug.launch
 .cproject
 .project
 .mxproject
-.settings
+.settings/**
