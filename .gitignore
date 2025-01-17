@@ -10,3 +10,7 @@ Debug
 *.d
 Snakey_Boot Debug.launch
 Snakey_Boot Debug.launch
+.cproject
+.project
+.mxproject
+.settings
