@@ -140,7 +140,7 @@ int main(void)
   CSP_QSPI_ExitQPIMODE();
 
   fflush(stdout);
-  printf("     -@-@-@-  Snakey Bootloader for Daisy  -@-@-@-     \r\n");
+  printf("     =^.^=  Snakey Bootloader for Daisy  =^.^=     \r\n");
 
   if (CSP_QUADSPI_Init() != HAL_OK) {
 	  printf("-----> quad spi init error  \r\n");
